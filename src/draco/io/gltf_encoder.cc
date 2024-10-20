@@ -1448,6 +1448,10 @@ std::vector<std::pair<std::string, int>> GltfAsset::AddDracoGenerics(
         accessor = AddAttribute(*att, mesh.num_points(), num_encoded_points,
                                 mesh.IsCompressionEnabled());
         attr_name = att->name();
+      } else {
+        accessor = AddAttribute(*att, mesh.num_points(), num_encoded_points,
+                                mesh.IsCompressionEnabled());
+        attr_name = att->name();
       }
     }
     if (accessor != -1 && !attr_name.empty()) {

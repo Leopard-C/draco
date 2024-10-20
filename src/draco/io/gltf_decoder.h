@@ -49,6 +49,8 @@ class GltfDecoder {
   StatusOr<std::unique_ptr<Mesh>> DecodeFromFile(
       const std::string &file_name, std::vector<std::string> *mesh_files);
   StatusOr<std::unique_ptr<Mesh>> DecodeFromBuffer(DecoderBuffer *buffer);
+  StatusOr<std::unique_ptr<Mesh>> DecodeFromTinyGltfModel(
+      tinygltf::Model &tinygltf_model);
 
   // Decodes a glTF file stored in the input |file_name| or |buffer| to a Scene.
   // The second form returns a vector of files used as input to the scene during
@@ -59,6 +61,8 @@ class GltfDecoder {
       const std::string &file_name, std::vector<std::string> *scene_files);
   StatusOr<std::unique_ptr<Scene>> DecodeFromBufferToScene(
       DecoderBuffer *buffer);
+  StatusOr<std::unique_ptr<Scene>> DecodeFromTinyGltfModelToScene(
+      tinygltf::Model &tinygltf_model);
 
   // Scene graph can be loaded either as a tree or a general directed acyclic
   // graph (DAG) that allows multiple parent nodes. By default. we decode the
@@ -91,6 +95,9 @@ class GltfDecoder {
 
   // Loads |gltf_model_| from |buffer| in GLB format.
   Status LoadBuffer(const DecoderBuffer &buffer);
+
+  // Loads |gltf_model_| from tinygltf |model|.
+  Status LoadTinyGltfModel(tinygltf::Model &tinygltf_model);
 
   // Builds mesh from |gltf_model_|.
   StatusOr<std::unique_ptr<Mesh>> BuildMesh();

@@ -464,6 +464,12 @@ StatusOr<std::unique_ptr<Mesh>> GltfDecoder::DecodeFromBuffer(
   return BuildMesh();
 }
 
+StatusOr<std::unique_ptr<Mesh>> GltfDecoder::DecodeFromTinyGltfModel(
+    tinygltf::Model &tinygltf_model) {
+  DRACO_RETURN_IF_ERROR(LoadTinyGltfModel(tinygltf_model));
+  return BuildMesh();
+}
+
 StatusOr<std::unique_ptr<Scene>> GltfDecoder::DecodeFromFileToScene(
     const std::string &file_name) {
   return DecodeFromFileToScene(file_name, nullptr);
@@ -485,6 +491,14 @@ StatusOr<std::unique_ptr<Scene>> GltfDecoder::DecodeFromBufferToScene(
   return std::move(scene_);
 }
 
+StatusOr<std::unique_ptr<Scene>> GltfDecoder::DecodeFromTinyGltfModelToScene(
+    tinygltf::Model &tinygltf_model) {
+  DRACO_RETURN_IF_ERROR(LoadTinyGltfModel(tinygltf_model));
+  scene_ = std::unique_ptr<Scene>(new Scene());
+  DRACO_RETURN_IF_ERROR(DecodeGltfToScene());
+  return std::move(scene_);
+}
+
 Status GltfDecoder::LoadFile(const std::string &file_name,
                              std::vector<std::string> *input_files) {
   const std::string extension = LowercaseFileExtension(file_name);
@@ -496,7 +510,7 @@ Status GltfDecoder::LoadFile(const std::string &file_name,
       &FileExists,
       // TinyGLTF's ExpandFilePath does not do filesystem i/o, so it's safe to
       // use in all environments.
-      &tinygltf::ExpandFilePath, &ReadWholeFile, &WriteWholeFile,
+      &tinygltf::ExpandFilePath, &ReadWholeFile, &WriteWholeFile, nullptr,
       reinterpret_cast<void *>(input_files)};
 
   loader.SetFsCallbacks(fs_callbacks);
@@ -531,6 +545,14 @@ Status GltfDecoder::LoadBuffer(const DecoderBuffer &buffer) {
     return Status(Status::DRACO_ERROR,
                   "TinyGLTF failed to load glb buffer: " + err);
   }
+  DRACO_RETURN_IF_ERROR(CheckUnsupportedFeatures());
+  input_file_name_.clear();
+  return OkStatus();
+}
+
+// Loads |gltf_model_| from tinygltf |model|.
+Status GltfDecoder::LoadTinyGltfModel(tinygltf::Model &tinygltf_model) {
+  std::swap(gltf_model_, tinygltf_model);
   DRACO_RETURN_IF_ERROR(CheckUnsupportedFeatures());
   input_file_name_.clear();
   return OkStatus();
@@ -638,7 +660,8 @@ Status GltfDecoder::CheckUnsupportedFeatures() {
   for (const auto &extension : gltf_model_.extensionsRequired) {
     if (extension != "KHR_materials_unlit" &&
         extension != "KHR_texture_transform" &&
-        extension != "KHR_draco_mesh_compression") {
+        extension != "KHR_draco_mesh_compression" &&
+        extension != "KHR_texture_basisu") {
       return Status(Status::UNSUPPORTED_FEATURE,
                     extension + " is unsupported.");
     }

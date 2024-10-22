@@ -194,6 +194,16 @@ macro(draco_set_optional_features)
     draco_enable_feature(FEATURE "DRACO_MESH_COMPRESSION_SUPPORTED")
     draco_enable_feature(FEATURE "DRACO_NORMAL_ENCODING_SUPPORTED")
     draco_enable_feature(FEATURE "DRACO_STANDARD_EDGEBREAKER_SUPPORTED")
+    
+    if(NOT EMSCRIPTEN)
+      # For now, enable deduplication for both encoder and decoder.
+      # TODO(ostava): Support for disabling attribute deduplication for the C++
+      # decoder is planned in future releases.
+      draco_enable_feature(FEATURE
+                           DRACO_ATTRIBUTE_INDICES_DEDUPLICATION_SUPPORTED)
+      draco_enable_feature(FEATURE
+                           DRACO_ATTRIBUTE_VALUES_DEDUPLICATION_SUPPORTED)
+    endif()
   else()
     if(DRACO_POINT_CLOUD_COMPRESSION)
       draco_enable_feature(FEATURE "DRACO_POINT_CLOUD_COMPRESSION_SUPPORTED")
